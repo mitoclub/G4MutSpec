@@ -1,0 +1,73 @@
+
+---
+title: "Load and View Dataframe"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-data}
+# Load necessary libraries
+library(readr)
+library(dplyr)
+
+# Load the dataframe
+df <- read_csv("../data/processed/df_all.csv", show_col_types = FALSE)
+
+# View the first few rows of the dataframe
+head(df)
+colnames(df)
+```
+
+```{r summary}
+### Question1: WHETHER C>T on light strand mutates differently in loops and tetrads  # higher in loops?
+
+df$"C>T_rate_within_loops" = df$"C>T_loops"/df$C_loops
+df$"C>T_rate_within_tetrads" = df$"C>T_tetrads"/df$C_tetrads
+
+filtered_df <- df %>%
+  filter(`C>T_rate_within_loops` > 0, !is.na(`C>T_rate_within_loops`),
+         `C>T_rate_within_tetrads` > 0, !is.na(`C>T_rate_within_tetrads`))
+
+# Calculate the desired ratios
+filtered_df <- filtered_df %>%
+  mutate(`C>T_ratio_loops_to_tetrads` = `C>T_rate_within_loops` / `C>T_rate_within_tetrads`)
+
+summary(filtered_df$"C>T_ratio_loops_to_tetrads")
+wilcox.test(filtered_df$"C>T_ratio_loops_to_tetrads", mu = 1)
+
+### Question2: WHETHER C>T (light strand) mutates differently in loops and neighbors (up+down)  # higher in loops?
+
+df$"C>T_rate_within_loops" = df$"C>T_loops"/df$C_loops
+df$"C>T_rate_in_n" = (df$"C>T_n_up"/df$C_n_up + df$"C>T_n_down"/df$C_n_down)/2
+
+filtered_df <- df %>%
+  filter(`C>T_rate_within_loops` > 0, !is.na(`C>T_rate_within_loops`),
+         `C>T_rate_in_n` > 0, !is.na(`C>T_rate_in_n`))
+
+# Calculate the desired ratios
+filtered_df <- filtered_df %>%
+  mutate(`C>T_ratio_loops_to_n` = `C>T_rate_within_loops` / `C>T_rate_in_n`)
+
+summary(filtered_df$"C>T_ratio_loops_to_n")
+wilcox.test(filtered_df$"C>T_ratio_loops_to_n", mu = 1)
+
+### Question3: WHETHER C>T (light strand) mutates differently in tetrads and neighbors (up+down) # higher in tetrads?
+
+df$"C>T_rate_within_tetrads" = df$"C>T_tetrads"/df$C_tetrads
+df$"C>T_rate_in_n" = (df$"C>T_n_up"/df$C_n_up + df$"C>T_n_down"/df$C_n_down)/2
+
+filtered_df <- df %>%
+  filter(`C>T_rate_within_tetrads` > 0, !is.na(`C>T_rate_within_tetrads`),
+         `C>T_rate_in_n` > 0, !is.na(`C>T_rate_in_n`))
+
+# Calculate the desired ratios
+filtered_df <- filtered_df %>%
+  mutate(`C>T_ratio_tetrads_to_n` = `C>T_rate_within_tetrads` / `C>T_rate_in_n`)
+
+summary(filtered_df$"C>T_ratio_tetrads_to_n")
+wilcox.test(filtered_df$"C>T_ratio_tetrads_to_n", mu = 1)
+
+```
